@@ -1,6 +1,7 @@
 #!/bin/bash
 
 declare -A ANIMATION
+# shellcheck disable=SC2034
 ANIMATION=(
     ["Ookami to Koushinryou"]="/MERCHANT MEETS THE WISE WOLF.狼与香辛料 行商邂逅贤狼.2024/Season 1"
     ["Hibike! Euphonium"]="/Sound! Euphonium.吹响吧, 上低音号!.2015/Season 3"
@@ -13,12 +14,18 @@ ANIMATION=(
 )
 
 
+# shellcheck disable=SC2034
 TARGET="/webdav/onedrive/video/Donghua/Auto"
+# shellcheck disable=SC2034
 SPARE_DIR="/webdav/onedrive/tmp"
+# shellcheck disable=SC2034
 TMDB_LANG="zh-CN"
 AUTH=$(printenv tmdb_auth)
+# shellcheck disable=SC2034
 HEADERS="Authorization: Bearer ${AUTH}"
+# shellcheck disable=SC2034
 IMAGE_URL="https://image.tmdb.org/t/p/original"
+# shellcheck disable=SC2034
 PROFILE_URL="https://image.tmdb.org/t/p/h632"
 
 

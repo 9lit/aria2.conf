@@ -1,15 +1,17 @@
 #!/bin/bash
 
 # 准备初始变量
-HOME=$(pwd)
+HOME=$(dirname "$(realpath -es "$0")")
+# shellcheck disable=SC1091
 source "${HOME}/config.sh"
+# shellcheck disable=SC1091
 source "${HOME}/urlencode.sh"
 SOURCE_DIR=$3
 DATE=$(date "+%Y-%m-%d %H:%M:%S")
 LOG="${HOME}/bt.script.log"
 
 log() {
-    echo -e "$2${DATE}++++$1" | tee -a $LOG
+    echo -e "$2${DATE}++++$1" | tee -a "$LOG"
 }
 
 log "脚本开始执行, ${SOURCE_DIR}" '\r'
@@ -35,7 +37,7 @@ done
 
 #如果没有获取到目标目录, 则上传至网盘的临时文件夹,并退出脚本
 if [ "$target_dir" == 0 ]; then
-    # cp "$SOURCE_DIR" "$PATH2"
+    cp "$SOURCE_DIR" "$PATH2"
     log "获取目标目录失败, 上传到临时目录${SPARE_DIR}"
     exit 0 
 fi
@@ -50,6 +52,7 @@ fi
 
 # 格式化目标文件名称 "S00E00.ext"
 format_file_name="S${season}E${episode}.${ext}"
+# shellcheck disable=SC2153
 target="${TARGET}${target_dir}/${format_file_name}"
 
 log "文件格式化成功:${format_file_name},目标地址获取成功:${target}"
@@ -103,6 +106,7 @@ tag() {
 
 list_xml() {
     
+    # shellcheck disable=SC2086
     a=$(echo "$episodeinfo" | jq -r '.crew[] | select( .job == "'$1'" ) | .name')
     IFS=$'\r\n' read -ra ADDR -d $'\0' <<< "$a"
 
@@ -119,10 +123,10 @@ list_xml() {
 actor() {
     num=$(echo "$episodeinfo" | jq -r ".$1 | length")
     number=0
-    if [ $num -eq 0 ]; then
-        exit 0
+    if [ "$num" -eq 0 ]; then
+        return 0
     fi
-    while [ $number -lt $num ]; do
+    while [ $number -lt "$num" ]; do
         profile_path="${PROFILE_URL}$(tag guest_stars[$number].profile_path)"
         xml "   <actor>"
         xml "       <name>$(tag guest_stars[$number].name)</name>"
@@ -135,6 +139,7 @@ actor() {
     done
 }
 
+# shellcheck disable=SC2153
 image_url="${IMAGE_URL}$(tag still_path)"
 xml '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
 xml '<episodedetails>'
@@ -150,7 +155,10 @@ xml "   <aired>$(tag air_date)</aired>"
 xml '<episodedetails>'
 
 # 下载缩略图文件
+log "获取缩略图下载地址: ${image_url}"
 curl -o "$tmp_thumb" "$image_url"
 
 mv "$tmp_thumb" "$thumb_outpath"
 mv "$tmp_nfo" "$nfo_outpath"
+
+log "视频信息刮削成功"
