@@ -21,8 +21,8 @@ function get_config_multiple () {
 
 # 获取单项配置
 function get_config() {
-    local file=$1
-    local key=$2
+    local file="$conf"
+    local key=$1
     sed -n 's/^[[:space:]]*'$key'[[:space:]]*=[[:space:]]*\(.*[^[:space:]]\)\([[:space:]]*\)$/\1/p' $file
 }
 

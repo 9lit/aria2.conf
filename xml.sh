@@ -22,10 +22,10 @@ for task in "${tasks[@]}"; do
 
     # 获取订阅地址,和订阅规则
     if [[ "$rss_url" == "rss1" ]]; then 
-      rss_url=$(get_config_multiple rss rss1)
+      rss_url=$(get_config rss1)
       rss_rule="rss/channel/item[contains(title, '$include_title')][position()=1]/enclosure/@url"
     elif  [[ "$rss_url" == "rss2" ]]; then
-      rss_url=$(get_config_multiple rss rss2)
+      rss_url=$(get_config rss2)
       rss_rule="rss/channel/item[contains(title, '$include_title')][position()=1]/link"
     fi
 
@@ -33,7 +33,7 @@ for task in "${tasks[@]}"; do
     if [[ $rss_url != "$old_url" ]]; then xml="$(curl "$rss_url" )"; old_url="$rss_url"; old_xml="$xml"; fi
 
     # 获取下载链接
-    link=$(echo "$xml" | xmlstarlet select -E UTF-8 -t -v "$rss_rule" -nl)
+    link=$(echo "$xml" | xmlstarlet select -E "uft-8" -t -v "$rss_rule" -nl)
 
     # 推送到 aria2 rpc服务器 进行下载
     #检查下载链接的 md5 值, 如果不一致则停止下载
