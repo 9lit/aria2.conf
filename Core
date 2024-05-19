@@ -1,0 +1,121 @@
+#!/bin/bash
+
+HOME=$(dirname "$(realpath -es "$0")")
+BTLOG="${HOME}/bt.log"
+RSSLOG="${HOME}/rss.log"
+conf="${HOME}/conf"
+
+
+# Rss 方法
+
+# 获取多项配置
+function get_config_multiple () {
+    local file section key
+    file="$conf"
+    section=$1
+    key=$2
+    # shellcheck disable=SC2086
+    val=$(awk -F '=' '/\['${section}'\]/{a=1}a==1&&$1~/'${key}'/{print $2;exit}' $file)
+    echo "${val}"
+}
+
+# 获取单项配置
+function get_config() {
+    local file=$1
+    local key=$2
+    sed -n 's/^[[:space:]]*'$key'[[:space:]]*=[[:space:]]*\(.*[^[:space:]]\)\([[:space:]]*\)$/\1/p' $file
+}
+
+# 获取全部任务名称
+function get_task_name() {
+    # shellcheck disable=SC2002
+
+    val=$(cat "$conf" | grep "\\[task.*\\]" | grep -oP "[a-z]*\d+")
+    echo "${val}"
+}
+
+# 打印日志
+function log() {
+    local file=$1
+    local text=$2
+    local code=$3
+    local logdate
+    logdate=$(date "+%Y-%m-%d %H:%M:%S")
+    case "$code" in
+        "" ) color="";;
+        200 ) color="\e[32m通过 \e[0m" ;;
+        300 ) color="\e[33m中止 \e[0m" ;;
+        400 ) color="\e[96m Info \e[0m" ;;
+        410 ) color="\e[93m Info \e[0m" ;;
+        420 ) color="\e[91m Fail \e[0m" ;;
+    esac
+    echo -e "${logdate}>>>${color} ${text}" | tee -a "$file"
+}
+
+
+function rsslog() {
+
+    local logdate
+    
+
+    log "$RSSLOG" "$1" "$2"
+
+}
+
+function btlog() {
+
+
+    log "$BTLOG"  "$1" "$2"
+
+}
+
+
+# 计算md5
+function md5() {
+    echo -n "$1" | md5sum | cut -d " " -f1
+}
+ 
+
+ # 通过 rclone 将文件传输到 网盘中
+
+function rclone_copy() {
+    local source=$1
+    local spare=$2
+
+    rclone copy -v "$source" "$spare" --log-file="$BTLOG"
+
+ }
+
+# 对字符串进行 16 进制编码
+function urlencode() {
+  local length="${#1}"
+  for (( i = 0; i < length; i++ )); do
+    local c="${1:i:1}"
+    case $c in
+      [a-zA-Z0-9.~_-]) printf "$c" ;;
+    *) printf "$c" | xxd -p -c1 | while read x;do printf "%%%s" "$x";done
+  esac
+done
+}
+
+function curl_get() {
+
+    local url=$1
+    local headers
+    headers="Authorization: Bearer $(printenv tmdb_auth)"
+
+    curl --request GET --url "$url" --header "$headers"
+
+}
+
+    
+
+
+
+# cat $cba_ini | # 打印文件
+#   grep "\\[taks.*\\]" | # 匹配 前缀为 taks的名称
+#   grep -oP "[a-z]*\d+" # 去掉方括号
+#   sort -r | # 按照 降序排序
+#   awk "{print $1}" | 
+#   head -1  # 获取第一行的字符串, 并进行打印
+

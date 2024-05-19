@@ -2,163 +2,68 @@
 
 # 准备初始变量
 HOME=$(dirname "$(realpath -es "$0")")
-# shellcheck disable=SC1091
-source "${HOME}/config.sh"
-# shellcheck disable=SC1091
-source "${HOME}/urlencode.sh"
-SOURCE_DIR=$3
-DATE=$(date "+%Y-%m-%d %H:%M:%S")
-LOG="${HOME}/bt.script.log"
+source "${HOME}/Core"
+SOURCE_DIR=$1
 
-log() {
-    echo -e "$2${DATE}++++$1" | tee -a "$LOG"
-}
 
-log "脚本开始执行, ${SOURCE_DIR}" '\r'
+btlog "脚本开始执行, 执行的文件为$3"
 
 # 获取输入文件信息, 视频文件名称, 后缀名, 集号
 source_file_name=$(basename "$SOURCE_DIR")
 ext="${source_file_name##*.}"
-episode=$(echo "$source_file_name" | grep -oP '\[\d{2}\]|-\s\d+')
-episode=$(echo "$episode" | grep -oP '\d+')
+e=$(echo "$source_file_name" | grep -oP '\[\d{2}\]|-\s\d+|E\d+' | grep -oP '\d+')
 
-log "视频名称:${source_file_name}\r集号:${episode}\r文件扩展名称:${ext}"
+if [ "$source_file_name" ]; then btlog "视频文件名称${source_file_name}和后缀名${ext}获取成功" 400; fi
+if [ "$e" ]; then btlog "集号:${e}获取" 400; else btlog "集号${e}获取失败,脚本退出" 420; exit 0;fi
 
-# 获取目标目录
-for key in "${!ANIMATION[@]}"; do 
-    if [[ ${source_file_name^^} =~ ${key^^} ]]; then
-        target_dir=${ANIMATION[$key]}
-        log "获取目标目录成功, ${target_dir}"
-        break
-    else
-        target_dir=0
-    fi
+
+tasks=$(get_task_name)
+IFS=$'\r\n' read -ra tasks -d $"\0" <<< "$tasks"
+
+# 获取远程路径
+for task in "${tasks[@]}"; do
+animation=$(get_config_multiple  "$task" video)
+
+if [[ "$source_file_name"^^ =~ $"$animation" ]]; then
+    target_dir=$(get_config_multiple "$task" path)
+    btlog 远程路径["${target_dir}"]获取成功,准备上传文件 400
+    break
+else
+    target_dir=0
+fi
+
 done
 
 #如果没有获取到目标目录, 则上传至网盘的临时文件夹,并退出脚本
 if [ "$target_dir" == 0 ]; then
-    cp "$SOURCE_DIR" "$PATH2"
-    log "获取目标目录失败, 上传到临时目录${SPARE_DIR}"
+    spare=$(get_config_multiple rclone spare)
+    # cp "$SOURCE_DIR" "$PATH2"
+    cp "$SOURCE_DIR" "$spare"
+    btlog "文件${source_file_name}不在追番列表中, 上传到远程目录${spare}, 并退出脚本" 420
     exit 0 
 fi
 
 
 # 向目标目录中获取季节号,并格式化为 "00"
-season=$(basename "$target_dir")
-season=$(echo "$season" | grep -oP '\d+')
-if [ ${#season} -eq 1 ]; then
-    season="0$season"
+s=$(basename "$target_dir")
+s=$(echo "$s" | grep -oP '\d+')
+if [ ${#s} -eq 1 ]; then
+    s="0$s"
 fi
 
 # 格式化目标文件名称 "S00E00.ext"
-format_file_name="S${season}E${episode}.${ext}"
-# shellcheck disable=SC2153
-target="${TARGET}${target_dir}/${format_file_name}"
+format_file_name="S${s}E${e}.${ext}"
+btlog "文件格式化成功:${format_file_name}" 400
 
-log "文件格式化成功:${format_file_name},目标地址获取成功:${target}"
+# 获取远程路径,
+remote=$(get_config_multiple rclone remote)
+
+target="${remote}${target_dir}/${format_file_name}"
+btlog "目标地址获取成功:${target}, 准备移动文件" 400
 
 #移动并重命名
+
 cp "$SOURCE_DIR" "$target"
+btlog "文件上传至网盘${target}成功,准备刮削数据" 400
 
-log "文件上传成功, 开始刮削视频信息"
-
-# 刮削视频信息
-
-# 分割字符串
-## 去掉头文件, 获取tv文件夹名称
-target_dir=${target_dir:1} 
-video_info=$(dirname "$target_dir")
-
-IFS='.'; read -ra name_and_year <<<"$video_info"
-
-# 获取剧集名称和年份
-title=${name_and_year[0]}
-year=${name_and_year[-1]}
-
-log "剧集名称[${title}]和年份[${year}]获取成功 "
-
-# 对视频名称进行编码
-title=$(urlencode "$title")
-
-id=$(curl --request GET \
-     --url "https://api.themoviedb.org/3/search/tv?query=${title}&include_adult=false&language=${TMDB_LANG}&page=1&year=${year}" \
-     --header "$HEADERS" | jq ".results[0].id")
-
-# 获取集信息
-episodeinfo=$(curl --request GET \
-     --url "https://api.themoviedb.org/3/tv/${id}/season/${season}/episode/${episode}?language=${TMDB_LANG}" \
-     --header "$HEADERS")
-
-
-nfo_outpath=${target/%.m*/.nfo}
-thumb_outpath=${target/%.m*/-thumb.jpg}
-tmp_nfo="/root/.aria2c/nfo.nfo"
-tmp_thumb="/root/.aria2c/thumb.jpg"
-
-
-xml() {
-    echo "$1" >> "$tmp_nfo"
-}
-
-tag() {
-    echo "$episodeinfo" | jq -r ".$1"
-}
-
-list_xml() {
-    
-    # shellcheck disable=SC2086
-    a=$(echo "$episodeinfo" | jq -r '.crew[] | select( .job == "'$1'" ) | .name')
-    IFS=$'\r\n' read -ra ADDR -d $'\0' <<< "$a"
-
-    for i in "${ADDR[@]}"; do
-        if [ "$1" == "Writer" ]; then
-            xml "   <credits>${i}</credits>"
-        else
-            xml "   <director>${i}</director>"
-        fi
-    done
-
-}
-
-actor() {
-    num=$(echo "$episodeinfo" | jq -r ".$1 | length")
-    number=0
-    if [ "$num" -eq 0 ]; then
-        return 0
-    fi
-    while [ $number -lt "$num" ]; do
-        profile_path="${PROFILE_URL}$(tag guest_stars[$number].profile_path)"
-        xml "   <actor>"
-        xml "       <name>$(tag guest_stars[$number].name)</name>"
-        xml "       <role>$(tag guest_stars[$number].character)</role>"
-        xml "       <thumb>${profile_path}</thumb>"
-        xml "       <order>$(tag guest_stars[$number].order)</order>"
-        xml "   </actor>"
-    number=$((number + 1))
-    echo $number
-    done
-}
-
-# shellcheck disable=SC2153
-image_url="${IMAGE_URL}$(tag still_path)"
-xml '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
-xml '<episodedetails>'
-xml "   <title>$(tag name)</title>"
-xml "   <plot>$(tag overview)</plot>"
-xml "   <runtime>$(tag runtime)</runtime>"
-xml "   <thumb aspect='thumb' preview=${image_url}></thumb>"
-xml "   <uniqueid type='imdb' default='true'>$(tag id)</uniqueid> "
-list_xml "Writer"
-list_xml "Director"
-actor guest_stars
-xml "   <aired>$(tag air_date)</aired>" 
-xml '<episodedetails>'
-
-# 下载缩略图文件
-log "获取缩略图下载地址: ${image_url}"
-curl -o "$tmp_thumb" "$image_url"
-
-mv "$tmp_thumb" "$thumb_outpath"
-mv "$tmp_nfo" "$nfo_outpath"
-
-log "视频信息刮削成功"
+echo "$target"

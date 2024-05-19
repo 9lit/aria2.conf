@@ -1,0 +1,72 @@
+# 远程路径配置
+[rclone]
+name=onedrive
+target=/video/Donghua/Auto
+spare=/tmp
+
+[tmdb]
+lang=zh-CN
+image=https://image.tmdb.org/t/p/original
+profile=https://image.tmdb.org/t/p/h632
+
+# aria2 配置
+
+[aria2]
+server=127.0.0.1
+port=6800
+secret=LoongLit
+path=/root/Downloads/animation
+
+# rss 链接
+[rss]
+rss1=https://mikanani.hacgn.fun/RSS/MyBangumi?token=eoz1ajGuXAaU7LmsDmWKMw%3d%3d
+rss2=https://nyaa.si/?page=rss&q=Dungeon+Meshi+NF&c=0_0&f=0
+#规则
+[task1]
+name=迷宫饭
+title=New-raws
+url=rss2
+video=Dungeon Meshi
+path=/MERCHANT MEETS THE WISE WOLF.狼与香辛料 行商邂逅贤狼.2024/Season 1
+
+[task2]
+name=吹响吧! 上低音号 第三季
+title=上低音号
+url=rss1
+video=Hibike! Euphonium
+path=/Sound! Euphonium.吹响吧, 上低音号!.2015/Season 3
+
+[task3]
+name=为美好的世界献上祝福! 第三季
+title=为美好的世界献上祝福
+url=rss1
+video=為美好的世界獻上祝福
+path=/KONOSUBA.为美好的世界献上祝福！.2016/Season 3
+
+[task4]
+name=摇曳露营 第三季
+title=摇曳露营
+url=rss1
+video=搖曳露營
+path=/Yuru Camp.摇曳露营.2018/Season 3
+
+[task5]
+name=狼与香辛料 行商邂逅贤狼
+title=狼与香辛料
+url=rss1
+video=Ookami to Koushinryou
+path=/MERCHANT MEETS THE WISE WOLF.狼与香辛料 行商邂逅贤狼.2024/Season 1
+
+[task6]
+name=夜晚的水母不会游泳
+title=夜晚的水母不会游泳
+url=rss1
+video=夜晚的水母不會游泳
+path=/Yoru no Kurage wa Oyogenai.夜晚的水母不会游泳.2024/Season 1
+
+[task7]
+name=怪兽 8 号
+title=怪兽 8 号
+url=rss1
+video=怪獸 8 號
+path=/Kaijuu 8 Gou.怪兽8号.2024/Season 1
