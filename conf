@@ -19,15 +19,9 @@ path=/root/Downloads/animation
 
 # rss 链接
 [rss]
-rss1=https://mikanani.hacgn.fun/RSS/MyBangumi?token=eoz1ajGuXAaU7LmsDmWKMw%3d%3d
+rss1=https://mikanani.me/RSS/MyBangumi?token=eoz1ajGuXAaU7LmsDmWKMw%3d%3d
 rss2=https://nyaa.si/?page=rss&q=Dungeon+Meshi+NF&c=0_0&f=0
 #规则
-[task1]
-name=迷宫饭
-title=New-raws
-url=rss2
-video=Dungeon Meshi
-path=/MERCHANT MEETS THE WISE WOLF.狼与香辛料 行商邂逅贤狼.2024/Season 1
 
 [task2]
 name=吹响吧! 上低音号 第三季

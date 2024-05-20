@@ -1,7 +1,6 @@
 #!/bin/bash
 HOME=$(dirname "$(realpath -es "$0")")
 source "${HOME}/Core"
-# source $conf
 
 aria2_urls="http://$(get_config_multiple aria2 server):$(get_config_multiple aria2 port)/jsonrpc"
 secret=$(get_config_multiple  aria2 secret)
@@ -42,8 +41,8 @@ for task in "${tasks[@]}"; do
         rsslog "Aria2 停止下载任务, 任务GID: ${link_md5} 任务名称: ${rss_name}" 300
     else
         rsslog "Aria2 开始下载任务, 任务GID: ${link_md5} 任务名称: ${rss_name}, 下载链接:${link}" 200
-        # curl -X POST -d '{"jsonrpc":"2.0","method":"aria2.addUri","id":"'$link_md5'", \
-        #     "params":["token:'$secret'",["'$link'"],{"dir":"'$path'"}]}' $aria2_urls
+        curl -X POST -d '{"jsonrpc":"2.0","method":"aria2.addUri","id":"'$link_md5'", \
+            "params":["token:'$secret'",["'$link'"],{"dir":"'$path'"}]}' $aria2_urls
         echo  "$link_md5" >> md5
     fi
     index=$((index+1))
