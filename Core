@@ -1,12 +1,7 @@
 #!/bin/bash
 
 HOME=$(dirname "$(realpath -es "$0")")
-BTLOG="${HOME}/bt.log"
-RSSLOG="${HOME}/rss.log"
-conf="${HOME}/conf"
-
-
-# Rss 方法
+conf="${HOME}/rss_and_upload_and_scrape.conf"
 
 # 获取多项配置
 function get_config_multiple () {
@@ -43,47 +38,47 @@ function log() {
     logdate=$(date "+%Y-%m-%d %H:%M:%S")
     case "$code" in
         "" ) color="";;
-        200 ) color="\e[32m通过 \e[0m" ;;
-        300 ) color="\e[33m中止 \e[0m" ;;
-        400 ) color="\e[96m Info \e[0m" ;;
-        410 ) color="\e[93m Info \e[0m" ;;
-        420 ) color="\e[91m Fail \e[0m" ;;
+        0 ) color="\e[32m成功 \e[0m" ;;
+        1 ) color="\e[32m警告 \e[0m" ;;
+        2 ) color="\e[33m失败 \e[0m" ;;
+
     esac
     echo -e "${logdate}>>>${color} ${text}" | tee -a "$file"
 }
 
-
-function rsslog() {
-
-    local logdate
-    
-
-    log "$RSSLOG" "$1" "$2"
-
+function get_log_path() {
+#获取 log 地址
+    log_path=$(get_config_multiple "$1" log)
+    echo "$log_path"
 }
 
-function btlog() {
-
-
-    log "$BTLOG"  "$1" "$2"
-
+function rlog() {
+# 打印 rss 订阅日志
+    log "$(get_log_path rss)" "$1" "$2"
 }
 
+function alog() {
+# 打印 aria2 日志
+    log "$(get_log_path aria2)"  "$1" "$2"
+}
+function ulog() {
+# 打印 上传日志 日志
+    log "$(get_log_path upload)"  "$1" "$2"
+}
 
-# 计算md5
 function md5() {
+# 计算md5
     echo -n "$1" | md5sum | cut -d " " -f1
 }
  
-
- # 通过 rclone 将文件传输到 网盘中
-
-function rclone_copy() {
+function copyto() {
+# 通过 rclone 将文件传输到 网盘中
     local source=$1
     local spare=$2
+    local log
+    log=$(get_log_path rclone)
 
-    rclone copy -v "$source" "$spare" --log-file="$BTLOG"
-
+    rclone copyto -v "$source" "$spare" --log-file="$log"
  }
 
 # 对字符串进行 16 进制编码
