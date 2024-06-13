@@ -1,7 +1,7 @@
 # 远程路径配置
 [rclone]
 name=onedrive
-target=/video/Donghua/Auto
+target=/video/Episodes/JPN
 spare=/tmp
 
 [tmdb]
@@ -13,9 +13,9 @@ profile=https://image.tmdb.org/t/p/h632
 
 [aria2]
 server=127.0.0.1
-port=6800
+port=8880
 secret=LoongLit
-path=/root/Downloads/animation
+path=/var/tmp/animation
 
 # rss 链接
 [rss]
@@ -59,8 +59,8 @@ video=夜晚的水母不會游泳
 path=/Yoru no Kurage wa Oyogenai.夜晚的水母不会游泳.2024/Season 1
 
 [task7]
-name=怪兽 8 号
-title=怪兽 8 号
+name=少女乐队Cry 第一季
+title=GIRLS BAND CRY
 url=rss1
-video=怪獸 8 號
-path=/Kaijuu 8 Gou.怪兽8号.2024/Season 1
+video=GIRLS BAND CRY
+path=/少女乐队Cry.2024/Season 1

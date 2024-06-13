@@ -41,7 +41,7 @@ for task in "${tasks[@]}"; do
         rsslog "Aria2 停止下载任务, 任务GID: ${link_md5} 任务名称: ${rss_name}" 300
     else
         rsslog "Aria2 开始下载任务, 任务GID: ${link_md5} 任务名称: ${rss_name}, 下载链接:${link}" 200
-        curl -X POST -d '{"jsonrpc":"2.0","method":"aria2.addUri","id":"'$link_md5'", \
+        curl -X POST -d '{"jsonrpc":"2.0","method":"aria2.addUri","id":"'$link_md5'", 
             "params":["token:'$secret'",["'$link'"],{"dir":"'$path'"}]}' $aria2_urls
         echo  "$link_md5" >> md5
     fi
