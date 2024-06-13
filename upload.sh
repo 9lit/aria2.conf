@@ -37,7 +37,7 @@ done
 if [ "$target_dir" == 0 ]; then
     spare=$(get_config_multiple rclone spare)
     ulog "文件${source_file_name}不在追番列表中, 上传到远程目录${spare}, 并退出脚本" 1
-    copyto "$SOURCE_DIR", "$spare" 
+    copyto "$SOURCE_DIR" "$spare" 
     exit 0 
 fi
 

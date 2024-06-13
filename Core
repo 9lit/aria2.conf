@@ -73,12 +73,13 @@ function md5() {
  
 function copyto() {
 # 通过 rclone 将文件传输到 网盘中
-    local source=$1
-    local target
-    local log
+    local source=$1; local target; 
+    local log; local config 
+    
     target="$(get_config_multiple rclone name):$2"
+    config="$(get_config_multiple rclone config)"
     log=$(get_log_path rclone)
-    rclone -vP copyto "$source" "$target" --log-file="$log"
+    rclone -vP copyto "$source" "$target" --log-file="$log" --config="$config"
  }
 
 # 对字符串进行 16 进制编码
