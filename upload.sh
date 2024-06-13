@@ -14,7 +14,7 @@ ext="${source_file_name##*.}"
 episodes=$(echo "$source_file_name" | grep -oP '\[\d{2}\]|-\s\d+|E\d+|\[\d{2}v2\]' | grep -oP '\d+')
 
 if [ "$source_file_name" ]; then ulog "视频文件名称${source_file_name}和后缀名${ext}获取成功" 0; fi
-if [ "$e" ]; then ulog "集号:${episodes}获取" 0; else btlog "集号${episodes}获取失败,脚本退出" 2; exit 0;fi
+if [ "$episodes" ]; then ulog "集号:${episodes}获取" 0; else ulog "集号${episodes}获取失败,脚本退出" 2; exit 0;fi
 
 
 IFS=$'\r\n' read -ra tasks -d $"\0" <<< "$(get_task_name)"
