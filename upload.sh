@@ -46,11 +46,11 @@ season=$(basename "$target_dir" | grep -oP '\d+')
 if [ ${#season} -eq 1 ]; then season="0$season";fi
 
 # 获取远程路径, 格式化目标文件名称 "S00E00.ext"
-target="$(get_config_multiple rclone remote)${target_dir}/S${season}E${episodes}.${ext}"
+target="$(get_config_multiple rclone target)${target_dir}/S${season}E${episodes}.${ext}"
 ulog "目标地址获取成功:${target}, 准备移动文件" 0
 
 #移动并重命名
-copyto "$SOURCE_DIR", "$target" 
+copyto "$SOURCE_DIR" "$target" 
 ulog "文件上传至网盘${target}成功,准备刮削数据" 0
 
 # 是否调用 scrape.sh 脚本文件

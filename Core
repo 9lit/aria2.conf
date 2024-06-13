@@ -76,9 +76,9 @@ function copyto() {
     local source=$1
     local target
     local log
-    target="$(get_config_multiple rclone name):$1"
+    target="$(get_config_multiple rclone name):$2"
     log=$(get_log_path rclone)
-    rclone copyto -v "$source" "$target" --log-file="$log"
+    rclone -vP copyto "$source" "$target" --log-file="$log"
  }
 
 # 对字符串进行 16 进制编码
