@@ -10,9 +10,6 @@ slog "执行脚本文件scrape.sh, 刮削文件$target" 0
 # 获取文件路径和文件名称
 filename=$(basename "$target")
 dir_name=$(dirname "$target")
-# 设置视频缩略图名称
-thumb="${dir_name}/${filename/%.*/.jpg}"
-slog "设置缩略图地址${thumb}" 0
 
 # 获取剧集名称以及年份信息
 IFS='/'; read -ra tv_name <<<"$target"
@@ -47,10 +44,10 @@ xml '</episodedetails>'
 slog "视频元数据刮削成功" 0
 
 slog "开始下载集缩略图" 0
-thumb_cahce=$(get_config_multiple scrape thumb_cahce)
-slog "集缩略图地址获取成功 ${thumb_cahce}" 0
+thumb_cache=$(get_config_multiple scrape thumb_cache)
+slog "集缩略图地址获取成功 ${thumb_cache}" 0
 thumb_url="${tmdb_image}$(tag still_path)"
-curl -o "$thumb_cahce" "$thumb_url"
+curl -o "$thumb_cache" "$thumb_url"
 slog "缩略图成功下载成功" 0
 
 slog "开始将将刮削后的信息上传到远程路径中" 0
@@ -59,8 +56,8 @@ nfo="${dir_name}/${filename/%.*/.nfo}"
 thumb="${dir_name}/${filename/%.*/.jpg}"
 slog "集元数据缓存获取成功, ${nfo_cache}" 0
 slog "集元数据远程地址获取成功, ${nfo}" 0
-slog "缩略图缓存获取成功, ${thumb_cahce}" 0
+slog "缩略图缓存获取成功, ${thumb_cache}" 0
 slog "缩略图远程地址获取成功, ${thumb}" 0
 
-moveto "$nfo_cache" "$nfo"; moveto "$thumb_cahce" "$thumb"
+moveto "$nfo_cache" "$nfo"; moveto "$thumb_cache" "$thumb"
 slog "集缩略图和集信息成功上传至远程路径"
