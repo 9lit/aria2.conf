@@ -140,12 +140,12 @@ function tag_actor() {
 
 function xml_completion_actor() {
 # 将获取到的演员信息,格式化为 xml 格式
-  local text
-  local empty="    "; local prefix=""
+  local text prefix
+  local empty="    ";
   declare -A actor=(["name"]="name" ["role"]="character" ["thumb"]="profile_path" ["order"]="order")
 
   for element in ${!actor[*]}; do
-    node=${actor[$element]}
+    node=${actor[$element]}; prefix=""
     if [ "$element" = "thumb" ]; then prefix=$(get_config_multiple tmdb profile); fi
     text="${prefix}$(tag_actor $node)"
     xml_completion "$element" "$text" "$empty"
@@ -195,7 +195,7 @@ function base_is_attr() {
   local attr=""
   if [ "$element" = "thumb" ]; then
     thumb_url="$(get_config_multiple tmdb image)$text"
-    attr=" aspect='thumb' preview=\'${thumb_url}\'"
+    attr=" aspect='thumb' preview='${thumb_url}'"
   elif [ "$element" = "uniqueid" ]; then
     attr=" type='imdb' default='true'"
   fi
