@@ -10,7 +10,7 @@ function get_config_multiple () {
     section=$1
     key=$2
     # shellcheck disable=SC2086
-    val=$(awk -F '=' '/\['${section}'\]/{a=1}a==1&&$1~/'${key}'/{print $2;exit}' $file)
+    val=$(awk -F '=' '/\['${section}'\]/{a=1}a==1&&$1~/'${key}'/{print $2;exit}' "$file")
     echo "${val}"
 }
 
@@ -158,7 +158,7 @@ function actor() {
   num=$(echo "$meta" | jq -r ".guest_stars | length")
   if [ "$num" -eq 0 ]; then return 0; fi
   while [ $index -lt "$num" ]; do
-    xml "   <actor>"; xml_completion_actor; xml "   </actor>"
+    xml "  <actor>"; xml_completion_actor; xml "  </actor>"
     index=$((index + 1))
   done
 }
@@ -168,7 +168,7 @@ function actor() {
 function staff_xml_completion() {
 # 获取演员姓名, 并格式化演员信息
   local post="$1"; local staff_name="$2"
-  local element=""; local empty="    ";
+  local element=""; local empty="  ";
   if [ "$post" = "Writer" ]; then element="credits"; else element="director"; fi
   xml_completion "$element" "$staff_name" "$empty"
 }
@@ -192,10 +192,11 @@ function staff() {
 }
 
 function base_is_attr() {
+  local attr=""
   if [ "$element" = "thumb" ]; then
     thumb_url="$(get_config_multiple tmdb image)$text"
     attr=" aspect='thumb' preview=\'${thumb_url}\'"
-  else
+  elif [ "$element" = "uniqueid" ]; then
     attr=" type='imdb' default='true'"
   fi
   echo "$attr"
