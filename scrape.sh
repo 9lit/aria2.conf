@@ -53,7 +53,7 @@ slog "缩略图成功下载成功" 0
 slog "开始将将刮削后的信息上传到远程路径中" 0
 nfo_cache=$(get_config_multiple scrape nfo_cache)
 nfo="${dir_name}/${filename/%.*/.nfo}"
-thumb="${dir_name}/${filename/%.*/.jpg}"
+thumb="${dir_name}/${filename/%.*/-thumb.jpg}"
 slog "集元数据缓存获取成功, ${nfo_cache}" 0
 slog "集元数据远程地址获取成功, ${nfo}" 0
 slog "缩略图缓存获取成功, ${thumb_cache}" 0
