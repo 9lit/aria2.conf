@@ -3,7 +3,7 @@
 # 准备初始变量
 HOME=$(dirname "$(realpath -es "$0")")
 source "${HOME}/Core"
-SOURCE_DIR=$1
+SOURCE_DIR=$3
 
 
 ulog "执行脚本文件upload.sh, 获取文件:$3" 0
