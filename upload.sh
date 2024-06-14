@@ -56,7 +56,7 @@ ulog "文件上传至网盘${target}成功,准备刮削数据" 0
 # 是否调用 scrape.sh 脚本文件
 if [ "$(get_config_multiple scrape flag)" -eq 0 ]; then 
     ulog "scrape 的 flage 等于 0, 调用脚本文件 scrape.sh 准备刮削远程视频文件" 0
-    "${HOME}/scrape.sh $target"; 
+    "${HOME}"/scrape.sh "$target"
 else
     ulog "scrape 的 flage 不为 0, 退出脚本"
 fi
