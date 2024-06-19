@@ -36,15 +36,15 @@ if [[ ! "$episode" && "$ext" ]]; then LOG_INFO "$content"; exit 0; fi
 # 获取远程路径
 IFS=$'\r\n' read -ra tasks -d $"\0" <<< "$(get_task_name)"
 for task in "${tasks[@]}"; do
-LOG_DEBUG "任务编号${animation}"
 animation=$(get_config_multiple  "$task" video)
-LOG_DEBUG "视频关键词${animation}"
 
 if [[ "$source_file_name"^^ =~ $"$animation" ]]; then
     target_dir=$(get_config_multiple "$task" path)
+    LOG_INFO "视频关键词${animation}"
     LOG_DEBUG "视频文件的远程上传路径文件夹${target_dir}"
     break
 else
+LOG_DEBUG "视频关键词${animation}"
 target_dir=0
 fi
 

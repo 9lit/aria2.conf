@@ -54,7 +54,7 @@ function LOG_INFO() {
 }
 
 function LOG_DEBUG() {
-  if [[ $log_level = debug ]]; then local content=$1; log "$content" 1; else 0;fi
+  if [[ $log_level = debug ]]; then local content=$1; log "$content" 1;fi
 }
 
 
