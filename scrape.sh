@@ -4,7 +4,7 @@
 #获取目标目录, 设置家目录, 打印日志
 TARGET=$1
 HOME=$(dirname "$(realpath -es "$0")")
-source "${HOME}/core"
+source "${HOME}/core" "$HOME"
 LOG_INFO "执行脚本文件scrape.sh, 刮削文件$TARGET"
 
 # 对字符串进行 16 进制编码
@@ -96,7 +96,7 @@ function staff_name() {
   # local post="$1"
   name_string=$(echo "$episode_meta" | jq -r '.crew[] | select( .job == "'$staff_post'" ) | .name')
   IFS=$'\r\n' read -ra ADDR -d $'\0' <<< "$name_string"
-  for staff_name in "${ADDR[@]}"; do staff_xml_completio; done
+  for staff_name in "${ADDR[@]}"; do staff_xml_completion; done
 
 }
 
@@ -149,7 +149,7 @@ dir_name=$(dirname "$TARGET")
 
 # 获取剧集名称以及年份信息
 IFS='/'; read -ra episode_path <<<"$TARGET"
-episode_folder="${episode_path}[-3]"
+episode_folder="${episode_path[-3]}"
 LOG_DEBUG "剧集文件夹为${episode_folder}"
 IFS='.'; read -ra name_and_year <<<"${episode_folder}"
 title=${name_and_year[0]}; year=${name_and_year[-1]}
@@ -169,7 +169,7 @@ LOG_DEBUG "剧集季节号${season}, 剧集集号${episode}"
 
 # 获取剧集的 tmdb id, 以及根据 id 号获取当前剧集元数据
 url="https://api.themoviedb.org/3/search/tv?query=${title}&include_adult=false&language=${lang}&year=${year}"
-id=$("$(curl_get "$url")" | jq ".results[0].id")
+id=$(curl_get "$url" | jq ".results[0].id")
 if [ ! "$id" ]; then LOG_DEBUG "剧集 tmdb id ${id}"; exit 2; fi
 url="https://api.themoviedb.org/3/tv/${id}/season/${season}/episode/${episode}?language=${lang}"
 LOG_DEBUG "请求地址${episode_meta}"
@@ -192,13 +192,15 @@ thumb_url="${tmdb_image}$(tag still_path)"
 curl -o "$thumb_cache" "$thumb_url"
 LOG_INFO "缩略图成功下载成功"
 
-LOG_INFO "开始将将刮削后的信息上传到远程路径中"
+LOG_INFO "开始将将刮削后的信息上传到远程路径"
 nfo_cache=$(get_config_multiple scrape nfo_cache)
-LOG_DEBUG "集元数据缓存地址${nfo_cache}"
+LOG_INFO "集元数据缓存地址${nfo_cache}"
 nfo="${dir_name}/${filename/%.*/.nfo}"
-LOG_DEBUG "集元数据上传地址${nfo_cache}"
+LOG_INFO "集元数据上传地址${nfo_cache}"
 thumb="${dir_name}/${filename/%.*/-thumb.jpg}"
-LOG_DEBUG "集缩略图远程地址, ${thumb}"
+LOG_INFO "集缩略图远程地址, ${thumb}"
 
 upload moveto "$nfo_cache" "$nfo"; upload moveto "$thumb_cache" "$thumb"
 LOG_INFO "集缩略图和集信息成功上传至远程路径"
+
+rm -rf "$nfo_cache" "$thumb_cache"
