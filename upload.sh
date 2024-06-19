@@ -5,25 +5,7 @@ HOME=$(dirname "$(realpath -es "$0")")
 source "${HOME}/core" "$HOME"
 
 LOG_INFO "执行脚本文件upload.sh, 获取文件:$3"
-
 SOURCE_DIR=$3
-
-function upload() {
-
-    local mode=$1 source=$2
-    local target config 
-    
-    target="$(get_config_multiple rclone name):$1"
-    config="$(get_config_multiple rclone config)"
-
-    rclone -vP $mode "$source" "$target" --log-file="$log_file" --config="$config"
-
-    LOG_DEBUG "upload(), 上传模式$mode"
-    LOG_DEBUG "upload(), 本地文件地址 $source"
-    LOG_DEBUG "upload(), 远程路径$target"
-    LOG_DEBUG "upload(), rclone 配置文件路径 $config"
-    LOG_INFO "upload(), 文件成功上传至网盘"
-}
 
 source_file_name=$(basename "$SOURCE_DIR")
 LOG_INFO "源文件名称$source_file_name"
@@ -55,7 +37,7 @@ LOG_DEBUG "视频文件的远程上传路径文件夹${target_dir}"
 if [ "$target_dir" -eq 0 ]; then
   spare=$(get_config_multiple rclone spare)
   LOG_INFO "文件不在追番列表中,上传到远程临时目录${spare}"
-  upload copyto "$SOURCE_DIR" "$spare"
+  UPLOAD copyto "$SOURCE_DIR" "$spare"
   LOG_INFO "文件上传成功"
   exit 0
 fi
@@ -69,7 +51,7 @@ target="$(get_config_multiple rclone target)${target_dir}/S${season}E${episode}.
 LOG_INFO "文件的远程上传路径(最终地址)${target}"
 
 # 上传文件
-upload copyto "$SOURCE_DIR" "$target" 
+UPLOAD copyto "$SOURCE_DIR" "$target" 
 
 
 # 是否调用 scrape.sh 脚本文件

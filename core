@@ -58,6 +58,23 @@ function LOG_DEBUG() {
 }
 
 
+function UPLOAD() {
+
+    local mode=$1 source=$2 target=$3
+    local config 
+    
+    config="$(get_config_multiple rclone config)"
+
+    rclone -vP $mode "$source" "$target" --log-file="$log_file" --config="$config"
+
+    LOG_DEBUG "upload(), 上传模式$mode"
+    LOG_DEBUG "upload(), 本地文件地址 $source"
+    LOG_DEBUG "upload(), 远程路径$target"
+    LOG_DEBUG "upload(), rclone 配置文件路径 $config"
+    LOG_INFO "upload(), 文件成功上传至网盘"
+}
+
+
 # cat $cba_ini | # 打印文件
 #   grep "\\[taks.*\\]" | # 匹配 前缀为 taks的名称
 #   grep -oP "[a-z]*\d+" # 去掉方括号

@@ -200,7 +200,7 @@ LOG_INFO "集元数据上传地址${nfo_cache}"
 thumb="${dir_name}/${filename/%.*/-thumb.jpg}"
 LOG_INFO "集缩略图远程地址, ${thumb}"
 
-upload moveto "$nfo_cache" "$nfo"; upload moveto "$thumb_cache" "$thumb"
+UPLOAD moveto "$nfo_cache" "$nfo"; UPLOAD moveto "$thumb_cache" "$thumb"
 LOG_INFO "集缩略图和集信息成功上传至远程路径"
 
 rm -rf "$nfo_cache" "$thumb_cache"
