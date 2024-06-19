@@ -55,7 +55,7 @@ LOG_DEBUG "视频文件的远程上传路径文件夹${target_dir}"
 if [ "$target_dir" -eq 0 ]; then
   spare=$(get_config_multiple rclone spare)
   LOG_INFO "文件不在追番列表中,上传到远程临时目录${spare}"
-  upload copyto "$SOURCE_DIR" "$spare"
+#   upload copyto "$SOURCE_DIR" "$spare"
   LOG_INFO "文件上传成功"
   exit 0
 fi
@@ -69,7 +69,8 @@ target="$(get_config_multiple rclone target)${target_dir}/S${season}E${episode}.
 LOG_INFO "文件的远程上传路径(最终地址)${target}"
 
 # 上传文件
-upload copyto "$SOURCE_DIR" "$target" 
+# upload copyto "$SOURCE_DIR" "$target" 
+
 
 # 是否调用 scrape.sh 脚本文件
 if [ "$(get_config_multiple scrape flag)" -eq 0 ]; then 
