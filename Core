@@ -1,16 +1,13 @@
 #!/bin/bash
 
-HOME=$(dirname "$(realpath -es "$0")")
-conf="${HOME}/rss_and_upload_and_scrape.conf"
+# HOME=$(dirname "$(realpath -es "$0")")
+HOME=$1
+conf="${HOME}/upload_and_scrape.conf"
 
 # 获取多项配置
 function get_config_multiple () {
-    local file section key
-    file="$conf"
-    section=$1
-    key=$2
-    # shellcheck disable=SC2086
-    val=$(awk -F '=' '/\['${section}'\]/{a=1}a==1&&$1~/'${key}'/{print $2;exit}' "$file")
+    local file="$conf"; local section=$1 key=$2
+    val=$(awk -F '=' '/\['$section'\]/{a=1}a==1&&$1~/'$key'/{print $2;exit}' "$file")
     echo "${val}"
 }
 
@@ -29,200 +26,36 @@ function get_task_name() {
     echo "${val}"
 }
 
+function main_config() {
+  get_config_multiple main "$1"
+}
+
+temporary_folder="$(main_config temporary_folder)"
+buffer_folder="$(main_config buffer_folder)"
+log_level="$(main_config log_level)"
+log_file="${temporary_folder}/aria2.log"
+
+
 # 打印日志
 function log() {
-    local file=$1
-    local text=$2
-    local code=$3
+    
+    local content=$1 code=$2
     local logdate
     logdate=$(date "+%Y-%m-%d %H:%M:%S")
     case "$code" in
-        "" ) color="";;
-        0 ) color="\e[32m成功 \e[0m" ;;
-        1 ) color="\e[32m警告 \e[0m" ;;
-        2 ) color="\e[33m失败 \e[0m" ;;
-
+        "" ) color="";; 0 ) color="\e[32m[info]\e[0m" ;; 1 ) color="\e[32m[debug]\e[0m" ;;
     esac
-    echo -e "${logdate}>>>${color} ${text}" | tee -a "$file"
+
+    echo -e "${logdate}>>>${color} ${content}" | tee -a "$log_file"
 }
 
-function get_log_path() {
-#获取 log 地址
-    log_path=$(get_config_multiple "$1" log)
-    echo "$log_path"
+function LOG_INFO() {
+  local content=$1; log "$content" 0
 }
 
-function rlog() {
-# 打印 rss 订阅日志
-    log "$(get_log_path rss)" "$1" "$2"
+function LOG_DEBUG() {
+  if [[ $log_level = debug ]]; then local content=$1; log "$content" 1; else 0;fi
 }
-
-function slog() {
-# 打印 刮削日志 日志
-    log "$(get_log_path scrape)"  "$1" "$2"
-}
-function ulog() {
-# 打印 上传日志 日志
-    log "$(get_log_path upload)"  "$1" "$2"
-}
-
-function md5() {
-# 计算md5
-    echo -n "$1" | md5sum | cut -d " " -f1
-}
- 
-function copyto() {
-# 通过 rclone 将文件传输到 网盘中
-    local source=$1; local target; 
-    local log; local config 
-    
-    target="$(get_config_multiple rclone name):$2"
-    config="$(get_config_multiple rclone config)"
-    log=$(get_log_path rclone)
-    rclone -vP copyto "$source" "$target" --log-file="$log" --config="$config"
-}
-
-function moveto() {
-  local source=$1; local target=$2; 
-  local log; local config
-  config="$(get_config_multiple rclone config)"
-  log=$(get_log_path rclone)
-  rclone -vP moveto "$source" "$target" --log-file="$log" --config="$config"
-
-}
-
-# 对字符串进行 16 进制编码
-function urlencode() {
-  local length="${#1}"
-  for (( i = 0; i < length; i++ )); do
-    local c="${1:i:1}"
-    case $c in
-      [a-zA-Z0-9.~_-]) printf "$c" ;;
-    *) printf "$c" | xxd -p -c1 | while read x;do printf "%%%s" "$x";done
-  esac
-done
-}
-
-function curl_get() {
-
-    local url=$1
-    local headers
-    headers="Authorization: Bearer $(printenv tmdb_auth)"
-
-    curl --request GET --url "$url" --header "$headers"
-
-}
-
-# scrape.sh 方法
-cache=$(get_config_multiple scrape nfo_cache)
-function xml() {
-    echo "$1" >> "$cache" 
-}
-
-((meta))
-function tag() {
-  local node="$1"
-  echo "$meta" | jq -r ".$node"
-}
-
-function xml_completion() {
-    local element="$1"; local text="$2"; local empty="$3"; local attr="$4"
-    xml "$empty<${element}${attr}>$text</$element>"
-}
-
-# 将演员信息添加到 xml 文件中的方法
-((index))
-function tag_actor() {
-    # 从 tmdb 等接口中获取演员信息
-    local node="$1"
-    tag "guest_stars[$index].$node"
-}
-
-function xml_completion_actor() {
-# 将获取到的演员信息,格式化为 xml 格式
-  local text prefix
-  local empty="    ";
-  declare -A actor=(["name"]="name" ["role"]="character" ["thumb"]="profile_path" ["order"]="order")
-
-  for element in ${!actor[*]}; do
-    node=${actor[$element]}; prefix=""
-    if [ "$element" = "thumb" ]; then prefix=$(get_config_multiple tmdb profile); fi
-    text="${prefix}$(tag_actor $node)"
-    xml_completion "$element" "$text" "$empty"
-  done
-}
-
-function actor() {
-# 刮削演员信息
-  meta="$1"; index=0
-  num=$(echo "$meta" | jq -r ".guest_stars | length")
-  if [ "$num" -eq 0 ]; then return 0; fi
-  while [ $index -lt "$num" ]; do
-    xml "  <actor>"; xml_completion_actor; xml "  </actor>"
-    index=$((index + 1))
-  done
-}
-
-## 刮削工作人员信息
-
-function staff_xml_completion() {
-# 获取演员姓名, 并格式化演员信息
-  local post="$1"; local staff_name="$2"
-  local element=""; local empty="  ";
-  if [ "$post" = "Writer" ]; then element="credits"; else element="director"; fi
-  xml_completion "$element" "$staff_name" "$empty"
-}
-
-function staff_name() {
-#获取工作人员,导演和脚本家的姓名列表
-  local name
-  local post="$2"; local json="$1"
-  name_string=$(echo "$json" | jq -r '.crew[] | select( .job == "'$post'" ) | .name')
-  IFS=$'\r\n' read -ra ADDR -d $'\0' <<< "$name_string"
-  for name in "${ADDR[@]}"; do staff_xml_completion "$post" "$name"; done
-
-}
-
-function staff() {
-#刮削工作人员信息主方法
-  local post
-  local posts="$2"; local meta="$1"
-  posts=("Writer" "Director")
-  for post in "${posts[@]}"; do staff_name=$(staff_name "$meta" "$post"); done
-}
-
-function base_is_attr() {
-  local attr=""
-  if [ "$element" = "thumb" ]; then
-    thumb_url="$(get_config_multiple tmdb image)$text"
-    attr=" aspect='thumb' preview='${thumb_url}'"
-  elif [ "$element" = "uniqueid" ]; then
-    attr=" type='imdb' default='true'"
-  fi
-  echo "$attr"
-}
-
-function base_xml_completion() {
-    local element="$1"; node="$2"
-    local empty="  "; local attr=""
-    local text
-    text="$(tag $node)"; attr="$(base_is_attr $element)"
-    xml_completion "$element" "$text" "$empty" "$attr"
-
-}
-
-function base() {
-  meta="$1"
-  declare -A base=(["title"]="name" ["plot"]="overview" ["runtime"]="runtime" ["thumb"]="still_path")
-  base["uniqueid"]="id"; base["aired"]="air_date"
-
-  for element in ${!base[*]}; do
-    node=${base[$element]}
-    base_xml_completion "$element" "$node"
-  done
-}
-    
-
 
 
 # cat $cba_ini | # 打印文件
