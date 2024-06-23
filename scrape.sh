@@ -25,7 +25,7 @@ function curl_get() {
     local headers
     headers="Authorization: Bearer $(printenv tmdb_auth)"
 
-    curl --request GET --url "$url" --header "$headers"
+    curl --request GET --url "$url" --header "$headers" --silent
 
 }
 
@@ -129,7 +129,7 @@ function base_xml_completion() {
 }
 
 function base() {
-  LOG_INFO "开始刮削元数据的基本信息"
+  LOG_INFO "刮削元数据的基本信息"
   meta="$1"
   declare -A base=(["title"]="name" ["plot"]="overview" ["runtime"]="runtime" ["thumb"]="still_path")
   base["uniqueid"]="id"; base["aired"]="air_date"
@@ -198,5 +198,5 @@ LOG_INFO "刮削数据上传至网盘"
 # 删除缓存文件
 rm -rf "$xml_cache" "$thumb_cache"
 temp_folder="$(ls -a "$temporary_folder")"
-if [[  "$temp_folder" =~ $xml_cache && "$temp_folder" =~ $thumb_cache ]]; then LOG_INFO "缓存文件删除成功"; 
-else LOG_INFO "缓存文件删除失败 ${xml_cache} 或 ${thumb_cache}"; fi
+if [[  "$temp_folder" =~ $xml_cache || "$temp_folder" =~ $thumb_cache ]]; then LOG_INFO "缓存文件删除失败 ${xml_cache} 或 ${thumb_cache}"; 
+else LOG_INFO "缓存文件删除成功"; fi
