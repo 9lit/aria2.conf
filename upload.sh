@@ -55,8 +55,7 @@ UPLOAD copyto "$SOURCE_DIR" "$target"
 
 
 # 是否调用 scrape.sh 脚本文件
-if [ "$(get_config_multiple scrape flag)" -eq 0 ]; then 
-    LOG_INFO "scrape 的 flag 等于 0, 调用脚本文件 scrape.sh 准备刮削远程视频文件" 0
+if [ "$(get_config_multiple main scrape_flag)" -eq 0 ]; then 
     "${HOME}"/scrape.sh "$target"
     LOG_DEBUG "执行文件地址${HOME}/scrape.sh $target"
 else
