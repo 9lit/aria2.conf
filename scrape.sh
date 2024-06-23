@@ -29,9 +29,8 @@ function curl_get() {
 
 }
 
-cache=$(get_config_multiple scrape nfo_cache)
 function xml() {
-    echo "$1" >> "$cache"
+    echo "$1" >> "$xml_cache"
 }
 
 # ((meta))
@@ -144,8 +143,7 @@ function base() {
 }
 
 # 获取文件路径和文件名称
-filename=$(basename "$TARGET")
-dir_name=$(dirname "$TARGET")
+filename=$(basename "$TARGET"); dir_name=$(dirname "$TARGET")
 
 # 获取剧集名称以及年份信息
 IFS='/'; read -ra episode_path <<<"$TARGET"
@@ -155,52 +153,50 @@ IFS='.'; read -ra name_and_year <<<"${episode_folder}"
 title=${name_and_year[0]}; year=${name_and_year[-1]}
 if [[ ! "$title" && "$year" ]]; then LOG_DEBUG "电视剧名称${title}, 电视剧年份${year}"  ; exit 0; fi
 
-title=$(urlencode "$title")
-LOG_DEBUG "对电视剧名称进行编码处理${title}"
+title_encode=$(urlencode "$title"); LOG_DEBUG "对电视剧名称进行编码处理${title_encode}"
 
-# 获取刮削信息. 语言, 缩略图地址以及演员缩略图地址
-lang=$(get_config_multiple tmdb lang)
-LOG_INFO "刮削语言${lang}"
+# 获取刮削信息 刮削语言
+lang=$(get_config_multiple tmdb lang); LOG_DEBUG "刮削语言${lang}"
 # 获取剧集的季节号以及剧集号
 se=$(echo "$filename" | grep -oP "\d{2}")
-season=$(echo "$se" | sed -n 1p)
-episode=$(echo "$se" | sed -n 2p)
-LOG_DEBUG "剧集季节号${season}, 剧集集号${episode}"
+season=$(echo "$se" | sed -n 1p); episode=$(echo "$se" | sed -n 2p); LOG_DEBUG "剧集季节号${season}, 剧集集号${episode}"
 
-# 获取剧集的 tmdb id, 以及根据 id 号获取当前剧集元数据
-url="https://api.themoviedb.org/3/search/tv?query=${title}&include_adult=false&language=${lang}&year=${year}"
+# 刮削 tmdb
+url="https://api.themoviedb.org/3/search/tv?query=${title_encode}&include_adult=false&language=${lang}&year=${year}"
 id=$(curl_get "$url" | jq ".results[0].id")
-if [ ! "$id" ]; then LOG_DEBUG "剧集 tmdb id ${id}"; exit 2; fi
+if [ ! "$id" ]; then LOG_DEBUG "剧集 tmdb id ${id}"; exit 0; fi
 url="https://api.themoviedb.org/3/tv/${id}/season/${season}/episode/${episode}?language=${lang}"
-LOG_DEBUG "请求地址${episode_meta}"
 episode_meta="$(curl_get "$url")"
 LOG_DEBUG "剧集元数据${episode_meta}"
 
-LOG_INFO "开始刮削视频元数据"
+# 获取缓存文件地址
+xml_cache="${temporary_folder}/${title}.${filename/%.*/.nfo}"
+thumb_cache="${temporary_folder}/${title}.${filename/%.*/-thumb.jpg}"
+LOG_INFO "缓存文件所在位置 ${xml_cache}, ${thumb_cache}"
+
+# 刮削集元数据
 xml '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
 xml '<episodedetails>'
 base "$episode_meta"; staff "$episode_meta"; actor "$episode_meta"
 xml '</episodedetails>'
-LOG_INFO "视频元数据刮削成功"
+LOG_INFO "集元数据刮削成功"
 
-LOG_INFO "开始下载集缩略图"
+# 下载集缩略图
 tmdb_image=$(get_config_multiple tmdb image)
 LOG_DEBUG "集缩略图下载网址${tmdb_image}"
-thumb_cache=$(get_config_multiple scrape thumb_cache)
-LOG_INFO "集缩略图缓存地址 ${thumb_cache}"
 thumb_url="${tmdb_image}$(tag still_path)"
 curl -o "$thumb_cache" "$thumb_url"
-LOG_INFO "缩略图成功下载成功"
+LOG_INFO "集缩略图下载成功, 集缩略图请求下载地址${thumb_url}"
 
-LOG_INFO "开始将将刮削后的信息上传到远程路径"
-nfo_cache=$(get_config_multiple scrape nfo_cache)
-LOG_INFO "集元数据缓存地址${nfo_cache}"
+# 文件上传至网盘
 nfo="${dir_name}/${filename/%.*/.nfo}"
-LOG_INFO "集元数据上传地址${nfo_cache}"
 thumb="${dir_name}/${filename/%.*/-thumb.jpg}"
-LOG_INFO "集缩略图远程地址, ${thumb}"
+LOG_INFO "刮削数据上传地址 ${nfo}, ${thumb}"
+UPLOAD moveto "$xml_cache" "$nfo"; UPLOAD moveto "$thumb_cache" "$thumb"
+LOG_INFO "刮削数据上传至网盘"
 
-UPLOAD moveto "$nfo_cache" "$nfo"; UPLOAD moveto "$thumb_cache" "$thumb"
-LOG_INFO "集缩略图和集信息成功上传至远程路径"
-
-rm -rf "$nfo_cache" "$thumb_cache"
+# 删除缓存文件
+rm -rf "$xml_cache" "$thumb_cache"
+temp_folder="$(ls -a "$temporary_folder")"
+if [[  "$temp_folder" =~ $xml_cache && "$temp_folder" =~ $thumb_cache ]]; then LOG_INFO "缓存文件删除成功"; 
+else LOG_INFO "缓存文件删除失败 ${xml_cache} 或 ${thumb_cache}"; fi
