@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# HOME=$(dirname "$(realpath -es "$0")")
 HOME=$1
-conf="${HOME}/upload_and_scrape.conf"
+conf="${HOME}/perform_config.conf"
 
 # 获取多项配置
 function get_config_multiple () {

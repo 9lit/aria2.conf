@@ -1,17 +1,14 @@
 #!/bin/bash
 
 HOME=$(dirname "$(realpath -es "$0")")
-source "${HOME}/Core"
+source "${HOME}/core"
 
-gid="$1"
-path="$3"
-secret=$(get_config_multiple  aria2 secret)
-aria2_urls="http://$(get_config_multiple aria2 server):$(get_config_multiple aria2 port)/jsonrpc"
-
+function aria2_cofig() {
+  get_config_multiple aria2 "$1"
+}
 
 function aria2_rpc() {
-  local method=$1
-  local gid=$2
+  local method=$1 gid=$2
 
   curl -X POST -d '{"jsonrpc":"2.0","method":"'$method'","id": null,
     "params":["token:'$secret'", "'$gid'"]}' $aria2_urls
@@ -25,10 +22,15 @@ function aria2_delete() {
 
 }
 
+gid="$1"; path="$3"
+secret=$(aria2_cofig secret); protocol=$(aria2_cofig protocol) 
+server=$(aria2_cofig server); port=$(aria2_cofig port)
+aria2_urls="${protocol}://${server}:${port}/jsonrpc"
 
-# 从内存中删除已完成的任务
-aria2_delete "$gid"
+# 从内存中删除已完成的任务, 从储存空间中删除已完成的任务
+aria2_delete "$gid"; rm -rf "$path"
 
-# 从储存空间中删除已完成的任务
+LOG_INFO "文件${path} 下载完成,已被删除"
 
-rm -rf "$path"
+
+
