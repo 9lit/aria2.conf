@@ -172,7 +172,6 @@ LOG_DEBUG "剧集元数据${episode_meta}"
 # 获取缓存文件地址
 xml_cache="${temporary_folder}/${title}.${filename/%.*/.nfo}"
 thumb_cache="${temporary_folder}/${title}.${filename/%.*/-thumb.jpg}"
-LOG_INFO "缓存文件所在位置 ${xml_cache}, ${thumb_cache}"
 
 # 刮削集元数据
 xml '<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>'
@@ -185,15 +184,13 @@ LOG_INFO "集元数据刮削成功"
 tmdb_image=$(get_config_multiple tmdb image)
 LOG_DEBUG "集缩略图下载网址${tmdb_image}"
 thumb_url="${tmdb_image}$(tag still_path)"
-curl -o "$thumb_cache" "$thumb_url"
+curl -o "$thumb_cache" "$thumb_url" --silent
 LOG_INFO "集缩略图下载成功, 集缩略图请求下载地址${thumb_url}"
 
 # 文件上传至网盘
 nfo="${dir_name}/${filename/%.*/.nfo}"
 thumb="${dir_name}/${filename/%.*/-thumb.jpg}"
-LOG_INFO "刮削数据上传地址 ${nfo}, ${thumb}"
 UPLOAD moveto "$xml_cache" "$nfo"; UPLOAD moveto "$thumb_cache" "$thumb"
-LOG_INFO "刮削数据上传至网盘"
 
 # 删除缓存文件
 rm -rf "$xml_cache" "$thumb_cache"
