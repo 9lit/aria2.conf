@@ -4,60 +4,81 @@
 HOME=$(dirname "$(realpath -es "$0")")
 source "${HOME}/core" "$HOME"
 
-LOG_INFO "执行脚本文件upload.sh, 获取文件:$3"
+ALIST_URL=$(get_config_multiple alist url)
+RCLONE_SPARE=$(get_config_multiple rclone spare)
+RCLONE_TRAGE=$(get_config_multiple rclone target)
+RCLONE_NAME=$(get_config_multiple rclone name)
 SOURCE_DIR=$3
 
-source_file_name=$(basename "$SOURCE_DIR")
-LOG_INFO "源文件名称$source_file_name"
-ext="${source_file_name##*.}"
-episode=$(echo "$source_file_name" | grep -oP '\[\d{2}\]|-\s\d+|E\d+|\[\d{2}v2\]' | grep -oP '\d+')
+function get_file_info() {
+    source_file_name=$(basename "$SOURCE_DIR")
+    ext="${source_file_name##*.}"
+    episode=$(echo "$source_file_name" | grep -oP '\[\d{2}\]|-\s\d+|E\d+|\[\d{2}v2\]' | grep -oP '\d+')
+}
 
-content="视频集号${episode}或者后缀名称${ext}获取失败, 脚本退出"
-if [[ ! "$episode" && "$ext" ]]; then LOG_INFO "$content"; exit 0; fi
+function get_remote_path() {
+    # 获取远程路径
+    IFS=$'\r\n' read -ra tasks -d $"\0" <<< "$(get_task_name)"
+    for task in "${tasks[@]}"; do
+        animation=$(get_config_multiple  "$task" video) && target_dir=$(get_config_multiple "$task" path) && animation_name=$(get_config_multiple "$task" name)
+        if [[ "$source_file_name"^^ =~ $"$animation" ]]; then break; else target_dir=0; fi
+    done
 
-# 获取远程路径
-IFS=$'\r\n' read -ra tasks -d $"\0" <<< "$(get_task_name)"
-for task in "${tasks[@]}"; do
-animation=$(get_config_multiple  "$task" video)
+}
 
-if [[ "$source_file_name"^^ =~ $"$animation" ]]; then
-    target_dir=$(get_config_multiple "$task" path)
-    LOG_INFO "视频关键词${animation}"
-    LOG_DEBUG "视频文件的远程上传路径文件夹${target_dir}"
-    break
-else
-LOG_DEBUG "视频关键词${animation}"
-target_dir=0
-fi
+function animation_list() {
+    season=$(basename "$target_dir" | grep -oP '\d+')
+    if [ ${#season} -eq 1 ]; then season="0$season";fi
+    target="${RCLONE_TRAGE}/${target_dir}/S${season}E${episode}.${ext}"
+    rclone_path="${RCLONE_NAME}:$target" 
+}
 
-done
+function sendmail() {
+    # 发送推送成功的电子邮件
+    local flag && flag=$(get_config_multiple sendmail flag)
+    local context && context="<p>[追番信息]$title</p><p>$string</p>"
+    if [ $flag -ne 0 ]; then exit 0; fi
+    /home/kuma/venvs/bin/python3 sendmail.py "$1" "$content"
+}
 
-LOG_DEBUG "视频文件的远程上传路径文件夹${target_dir}"
+get_file_info && get_remote_path
+
 #如果没有获取到目标目录, 则上传至网盘的临时文件夹,并退出脚本
-if [ "$target_dir" -eq 0 ]; then
-  spare=$(get_config_multiple rclone spare)
-  LOG_INFO "文件不在追番列表中,上传到远程临时目录${spare}"
-  UPLOAD copyto "$SOURCE_DIR" "$spare"
-  LOG_INFO "文件上传成功"
-  exit 0
+if [ "$target_dir" -eq 0 ]; then 
+  rclone_path="${RCLONE_SPARE}/${source_file_name}"
+  url=${ALIST_URL}{$rclone_path} && title="$source_file_name"
+else 
+  animation_list 
+  url=${ALIST_URL}{$target} && title="$animation_name"
 fi
 
-season=$(basename "$target_dir" | grep -oP '\d+')
-LOG_DEBUG "视频文件的季节号为${season}"
-if [ ${#season} -eq 1 ]; then season="0$season";fi
-LOG_DEBUG "视频文件的季节号格式化为${season}"
+UPLOAD copyto "$SOURCE_DIR" "${RCLONE_NAME}:${rclone_path}"
 
-target="$(get_config_multiple rclone target)${target_dir}/S${season}E${episode}.${ext}"
-LOG_INFO "文件的远程上传路径(最终地址)${target}"
+string=$(echo << EOF
+===处理视频文件信息
+输入文件路径: $SOURCE_DIR
+文件名称: $source_file_name
+文件后缀: $ext
+视频集号: $episode
 
-# 上传文件
-UPLOAD copyto "$SOURCE_DIR" "$target" 
+===rclone 远程路径信息
+视频系列名称: $animation_name
+rclone 名称: $RCLONE_NAME
+上传路径: $rclone_path
 
+===alist 在线观看地址
+$url
+EOF
+)
 
-# 是否调用 scrape.sh 脚本文件
-if [ "$(get_config_multiple main scrape_flag)" -eq 0 ]; then 
-    "${HOME}"/scrape.sh "$target"
-    LOG_DEBUG "执行文件地址${HOME}/scrape.sh $target"
-else
-    LOG_INFO "scrape 的 flae 不为 0, 退出脚本"
-fi
+LOG_INFO "$string"
+
+sendmail
+
+# # 是否调用 scrape.sh 脚本文件
+# if [ "$(get_config_multiple main scrape_flag)" -eq 0 ]; then 
+#     "${HOME}"/scrape.sh "$target"
+#     LOG_DEBUG "执行文件地址${HOME}/scrape.sh $target"
+# else
+#     LOG_INFO "scrape 的 flae 不为 0, 退出脚本"
+# fi
