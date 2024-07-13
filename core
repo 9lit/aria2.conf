@@ -1,72 +1,51 @@
 #!/bin/bash
 
-HOME=$1
-conf="${HOME}/perform_config.conf"
+HOME=$1 && CONF="${HOME}/perform_config.conf"
 
 # 获取多项配置
 function get_config_multiple () {
-    local file="$conf"; local section=$1 key=$2
-    val=$(awk -F '=' '/\['$section'\]/{a=1}a==1&&$1~/'$key'/{print $2;exit}' "$file")
+    local section=$1 key=$2
+    val=$(awk -F '=' '/\['$section'\]/{a=1}a==1&&$1~/'$key'/{print $2;exit}' "$CONF")
     echo "${val}"
 }
 
 # 获取单项配置
 function get_config() {
-    local file="$conf"
     local key=$1
-    sed -n 's/^[[:space:]]*'$key'[[:space:]]*=[[:space:]]*\(.*[^[:space:]]\)\([[:space:]]*\)$/\1/p' $file
+    sed -n 's/^[[:space:]]*'$key'[[:space:]]*=[[:space:]]*\(.*[^[:space:]]\)\([[:space:]]*\)$/\1/p' $CONF
 }
 
 # 获取全部任务名称
 function get_task_name() {
-    # shellcheck disable=SC2002
-
-    val=$(cat "$conf" | grep "\\[task.*\\]" | grep -oP "[a-z]*\d+")
-    echo "${val}"
+    task_name=$(cat "$CONF" | grep "\\[task.*\\]" | grep -oP "[a-z]*\d+")
+    echo "${task_name}"
 }
 
-function main_config() {
-  get_config_multiple main "$1"
-}
 
-temporary_folder="$(main_config temporary_folder)"
-buffer_folder="$(main_config buffer_folder)"
-log_level="$(main_config log_level)"
-log_file="${temporary_folder}/aria2.log"
-
-
+LOG_FILE="$(get_config_multiple main log_file)"
 # 打印日志
-function log() {
-    
-    local content=$1 code=$2
-    local logdate
-    logdate=$(date "+%Y-%m-%d %H:%M:%S")
-    case "$code" in
-        "" ) color="";; 0 ) color="\e[32m[info]\e[0m" ;; 1 ) color="\e[32m[debug]\e[0m" ;;
-    esac
-
-    echo -e "${logdate}>>>${color} ${content}" | tee -a "$log_file"
+function LOG() {
+    local content=$1 title=$2 logdate && logdate=$(date "+%Y-%m-%d %H:%M:%S")
+    echo -e "\e[32m${logdate}\e[0m>>> ${title} ${content}" | tee -a "$LOG_FILE"
 }
 
-function LOG_INFO() {
-  local content=$1; log "$content" 0
-}
-
-function LOG_DEBUG() {
-  if [[ $log_level = debug ]]; then local content=$1; log "$content" 1;fi
-}
-
-
+RCLONE_CONFIG="$(get_config_multiple rclone config)"
+# 上传文件至 rclone
 function UPLOAD() {
-
     local mode=$1 source=$2 target=$3
-    local config 
-    config="$(get_config_multiple rclone config)"
+    rclone -vP $mode "$source" "$target" --log-file="$LOG_FILE" --config="$RCLONE_CONFIG"
+}
 
-    rclone -vP $mode "$source" "$target" --log-file="$log_file" --config="$config"
-
-    LOG_DEBUG "upload(), 上传模式$mode, rclone 配置文件路径$config"
-    LOG_INFO "upload()上传成功, 本地文件地址:${source}, 网盘地址:${target}"
+# 对字符串进行 16 进制编码
+function URLENCODE() {
+  local length="${#1}"
+  for (( i = 0; i < length; i++ )); do
+    local c="${1:i:1}" # 从左边第 i 个位置开始, 截取一个字符
+    case $c in # 排除 字母 数字 和部分特殊字符
+      [a-zA-Z0-9.~_-//:]) printf "$c" ;;
+    *) printf "$c" | xxd -p -c1 | while read x;do printf "%%%s" "$x";done
+  esac
+done
 }
 
 
