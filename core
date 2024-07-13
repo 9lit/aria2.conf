@@ -33,7 +33,11 @@ RCLONE_CONFIG="$(get_config_multiple rclone config)"
 # 上传文件至 rclone
 function UPLOAD() {
     local mode=$1 source=$2 target=$3
+    local status
     rclone -vP $mode "$source" "$target" --log-file="$LOG_FILE" --config="$RCLONE_CONFIG"
+
+    status=$(rclone ls "$target")
+    if [ "$status" =~ "directory not found"]; then return 1; else return 0; fi
 }
 
 # 对字符串进行 16 进制编码

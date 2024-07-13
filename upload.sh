@@ -80,6 +80,7 @@ string="
 视频系列名称: $animation_name
 rclone 名称: $RCLONE_NAME
 上传路径: $rclone_path
+是否上传成功: $? 成功:0, 失败:1
 
 ===alist 在线观看地址
 $(URLENCODE "$url")
