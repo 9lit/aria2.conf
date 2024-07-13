@@ -12,6 +12,7 @@ EMAIL_SENDER=$(get_config_multiple sendmail sender)
 EMAIL_PASSWD=$(get_config_multiple sendmail passwd)
 EMAIL_RECIPIENT=$(get_config_multiple sendmail recipient)
 EMAIL_FLAG=$(get_config_multiple sendmail flag)
+EMAIL_PYTHON_FILE=$(get_config_multiple sendmail path)
 SOURCE_DIR=$3
 
 function get_file_info() {
@@ -41,8 +42,7 @@ function sendmail() {
     # 发送推送成功的电子邮件
     local status
     if [ $EMAIL_FLAG -ne 0 ]; then exit 0; fi
-    # /home/kuma/venvs/bin/python3 sendmail.py "$title" "$"
-    message=$(python /c/Users/lain/test.py)
+    message=$(python3  "$EMAIL_PYTHON_FILE" "$EMAIL_SENDER" "$EMAIL_PASSWD" "$EMAIL_SENDER" "$title" "$string")
 
     if [ $message == "邮件发送成功！" ]; then status="成功"; else status="失败";fi
     mailmessage="
