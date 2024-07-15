@@ -3,7 +3,7 @@
 CONF="${1}/perform_config.json"
 
 
-function GetConfig(){ local node=$1; cat "$CONF" | jq ".$node"
+function GetConfig(){ local node=$1; cat "$CONF" | jq -r ".$node"
 }
 LOG_FILE="$(GetConfig other.log_file)"
 RCLONE_CONFIG="$(GetConfig rclone.config)"
