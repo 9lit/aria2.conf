@@ -1,0 +1,58 @@
+{
+    "aria2": {
+        "server": "http://localhost:6800/jsonrpc",
+        "token": "token"
+    },
+    "rclone": {
+        "name": "onedrive",
+        "target": "",
+        "spare": "",
+        "config": "/etc/rclone/rclone.conf"
+    },
+    "email": {
+        "flag": 0,
+        "path": "sendmail.py",
+        "sender": "",
+        "passwd": "",
+        "recipient": ""
+    },
+    "tmdb": {
+        "lang": "zh-CN",
+        "image": "https://image.tmdb.org/t/p/original",
+        "profile": "https://image.tmdb.org/t/p/h632"
+    },
+    "other": {
+        "log_file": "/tmp/aria2.log",
+        "online_url": "https://alist.1210923.xyz/d"
+    },
+    "anime": [
+        {
+            "name": "不时轻声地以俄语遮羞的邻座艾莉同学",
+            "title": [
+                "不時輕聲地以俄語遮羞的鄰座艾莉同學"
+            ],
+            "path": "/不时用俄语小声说真心话的邻桌艾莉同学.2024/S1"
+        },
+        {
+            "name": "物语系列 番外&怪物季",
+            "title": [
+                "物語系列"
+            ],
+            "path": "/物语系列.2009/S5"
+        },
+        {
+            "name": "杖与剑的魔剑谭",
+            "title": [
+                "杖與劍的魔劍譚"
+            ],
+            "path": "/杖与剑的魔剑谭.2024/S1"
+        },
+        {
+            "name": "擅长逃跑的殿下",
+            "title": [
+                "擅長逃跑的殿下"
+            ],
+            "path": "/擅长逃跑的殿下.2024/S1"
+        }
+    ]
+}

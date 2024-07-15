@@ -1,35 +1,19 @@
 #!/bin/bash
 
-HOME=$1 && CONF="${HOME}/perform_config.conf"
+CONF="${1}/perform_config.json"
 
-# 获取多项配置
-function get_config_multiple () {
-    local section=$1 key=$2
-    val=$(awk -F '=' '/\['$section'\]/{a=1}a==1&&$1~/'$key'/{print $2;exit}' "$CONF")
-    echo "${val}"
+
+function GetConfig(){ local node=$1; cat "$CONF" | jq ".$node"
 }
+LOG_FILE="$(GetConfig other.log_file)"
+RCLONE_CONFIG="$(GetConfig rclone.config)"
 
-# 获取单项配置
-function get_config() {
-    local key=$1
-    sed -n 's/^[[:space:]]*'$key'[[:space:]]*=[[:space:]]*\(.*[^[:space:]]\)\([[:space:]]*\)$/\1/p' $CONF
-}
-
-# 获取全部任务名称
-function get_task_name() {
-    task_name=$(cat "$CONF" | grep "\\[task.*\\]" | grep -oP "[a-z]*\d+")
-    echo "${task_name}"
-}
-
-
-LOG_FILE="$(get_config_multiple main log_file)"
 # 打印日志
 function LOG() {
     local content=$1 title=$2 logdate && logdate=$(date "+%Y-%m-%d %H:%M:%S")
     echo -e "\e[32m${logdate}\e[0m>>> ${title} ${content}" | tee -a "$LOG_FILE"
 }
 
-RCLONE_CONFIG="$(get_config_multiple rclone config)"
 # 上传文件至 rclone
 function UPLOAD() {
     local mode=$1 source=$2 target=$3
@@ -59,4 +43,3 @@ done
 #   sort -r | # 按照 降序排序
 #   awk "{print $1}" | 
 #   head -1  # 获取第一行的字符串, 并进行打印
-

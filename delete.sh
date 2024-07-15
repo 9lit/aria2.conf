@@ -1,36 +1,24 @@
 #!/bin/bash
 
 HOME=$(dirname "$(realpath -es "$0")")
-source "${HOME}/core"
+source "${HOME}/core" "$HOME"
 
-function aria2_cofig() {
-  get_config_multiple aria2 "$1"
+SERVER=$(GetConfig "aria2.server")
+TOKEN=$(GetConfig "aria2.token")
+PARAMS=$1; FILE_PATH=$2
+
+
+function Aria2(){
+  local method=$1 params=$2
+  curl -X POST -d '{"jsonrpc":"2.0","method":"'$method'","id": null, "params":["token:'$TOKEN'", '$params']}' $SERVER
 }
 
-function aria2_rpc() {
-  local method=$1 gid=$2
-
-  curl -X POST -d '{"jsonrpc":"2.0","method":"'$method'","id": null,
-    "params":["token:'$secret'", "'$gid'"]}' $aria2_urls
-
+function Delete(){ Aria2 aria2.removeDownloadResult '"'$PARAMS'"'
 }
 
-function aria2_delete() {
+# # function Stoplist(){ Aria2 aria2.tellStopped "$PARAMS" }
 
-  local gid=$1
-  aria2_rpc aria2.removeDownloadResult "$gid"
+# Delete && rm -rf "$FILE_PATH"
 
-}
-
-gid="$1"; path="$3"
-secret=$(aria2_cofig secret); protocol=$(aria2_cofig protocol) 
-server=$(aria2_cofig server); port=$(aria2_cofig port)
-aria2_urls="${protocol}://${server}:${port}/jsonrpc"
-
-# 从内存中删除已完成的任务, 从储存空间中删除已完成的任务
-aria2_delete "$gid"; rm -rf "$path"
-
-LOG_INFO "文件${path} 下载完成,已被删除"
-
-
-
+# # Stoplist '-1,1000' | jq .
+GetConfig "anime | length"
