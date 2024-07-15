@@ -27,7 +27,7 @@ function get_file_info() {
 function get_remote_path() {
     anime_len=$(GetConfig "anime | length")
     for ((i = 0; i < anime_len; i++)); do
-        anime=$(GetConfig "anime.[$i]")
+        anime=$(GetConfig "anime | .[$i]")
         anime_title_list=$(echo $anime | jq .title) && anime_title_len=$(echo $anime_title_list | jq length)
         for ((y = 0; y < anime_title_len; y++)); do anime_title=$(echo $anime_title_list | jq -r .[$y])
             if [[ "$source_file_name"^^ =~ $anime_title ]]; then anime_name=$(echo $anime | jq -r .name); anime_dir=$(echo $anime | jq -r .path); return 0; fi
@@ -58,7 +58,7 @@ function sendmail() {
     local status
     if [ $EMAIL_FLAG -ne 0 ]; then exit 1; fi
     if [ ! -f "$EMAIL_PYTHON_FILE" ]; then $(curl -o "$EMAIL_PYTHON_FILE" "$EMAIL_DOWNLOAD_URL"); fi
-    message=$(python  "$EMAIL_PYTHON_FILE" "$EMAIL_SENDER" "$EMAIL_PASSWD" "$EMAIL_SENDER" "$source_file_name" "$string")
+    message=$(python3  "$EMAIL_PYTHON_FILE" "$EMAIL_SENDER" "$EMAIL_PASSWD" "$EMAIL_SENDER" "$source_file_name" "$string")
 
     if [ $message -eq 0 ]; then status="成功"; else status="失败: $message";fi
     mailmessage="
