@@ -5,14 +5,16 @@ HOME=$(dirname "$(realpath -es "$0")")
 source "${HOME}/core" "$HOME"
 
 ALIST_URL=$(get_config_multiple alist url)
+# rclone 信息
 RCLONE_SPARE=$(get_config_multiple rclone spare)
 RCLONE_TRAGE=$(get_config_multiple rclone target)
 RCLONE_NAME=$(get_config_multiple rclone name)
+# 邮箱信息
 EMAIL_SENDER=$(get_config_multiple sendmail sender)
 EMAIL_PASSWD=$(get_config_multiple sendmail passwd)
 EMAIL_RECIPIENT=$(get_config_multiple sendmail recipient)
 EMAIL_FLAG=$(get_config_multiple sendmail flag)
-EMAIL_PYTHON_FILE=$(get_config_multiple sendmail path)
+EMAIL_PYTHON_FILE="${HOME}/$(get_config_multiple sendmail path)"
 SOURCE_DIR=$3
 
 function get_file_info() {
@@ -44,7 +46,7 @@ function sendmail() {
     if [ $EMAIL_FLAG -ne 0 ]; then exit 0; fi
     message=$(python3  "$EMAIL_PYTHON_FILE" "$EMAIL_SENDER" "$EMAIL_PASSWD" "$EMAIL_SENDER" "$title" "$string")
 
-    if [ $message == "邮件发送成功！" ]; then status="成功"; else status="失败";fi
+    if [ $message -eq 0 ]; then status="成功"; else status="失败";fi
     mailmessage="
 ===邮件发送信息
 发件人: $EMAIL_SENDER
