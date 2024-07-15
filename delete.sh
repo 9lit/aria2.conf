@@ -5,7 +5,7 @@ source "${HOME}/core" "$HOME"
 
 SERVER=$(GetConfig "aria2.server")
 TOKEN=$(GetConfig "aria2.token")
-PARAMS=$1; FILE_PATH=$2
+PARAMS=$1; FILE_PATH=$3
 
 
 function Aria2(){
@@ -18,7 +18,6 @@ function Delete(){ Aria2 aria2.removeDownloadResult '"'$PARAMS'"'
 
 # # function Stoplist(){ Aria2 aria2.tellStopped "$PARAMS" }
 
-# Delete && rm -rf "$FILE_PATH"
+Delete && rm -rf "$FILE_PATH"
 
 # # Stoplist '-1,1000' | jq .
-GetConfig "anime | length"
