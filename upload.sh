@@ -15,6 +15,7 @@ EMAIL_PASSWD=$(GetConfig "email.passwd")
 EMAIL_RECIPIENT=$(GetConfig "email.recipient")
 EMAIL_FLAG=$(GetConfig "email.flag")
 EMAIL_PYTHON_FILE="${HOME}/$(GetConfig email.path)"
+EMAIL_DOWNLOAD_URL="$(GetConfig email.download_url)"
 SOURCE_DIR=$3
 
 function get_file_info() {
@@ -41,6 +42,7 @@ function sendmail() {
     # 发送推送成功的电子邮件
     local status
     if [ $EMAIL_FLAG -ne 0 ]; then exit 0; fi
+    if [ ! -f "$EMAIL_PYTHON_FILE" ]; then $(curl -o "$EMAIL_PYTHON_FILE" "$EMAIL_DOWNLOAD_URL"); fi
     message=$(python3  "$EMAIL_PYTHON_FILE" "$EMAIL_SENDER" "$EMAIL_PASSWD" "$EMAIL_SENDER" "$source_file_name" "$string")
 
     if [ $message -eq 0 ]; then status="成功"; else status="失败";fi

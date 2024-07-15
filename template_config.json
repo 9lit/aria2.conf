@@ -12,6 +12,7 @@
     "email": {
         "flag": 0,
         "path": "sendmail.py",
+        "download_url": "https://raw.gitmirror.com/9lit/pytools/main/email/send_email.py",
         "sender": "",
         "passwd": "",
         "recipient": ""
